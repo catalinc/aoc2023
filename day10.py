@@ -13,7 +13,7 @@ Tile = namedtuple("Tile", ["shape", "row", "col"])
 class PipeMap:
     grid: list[list[Tile]]
     start: Tile
-    loop: list[Tile] = field(init=False)
+    loop: set[Tile] = field(init=False)
     FITTINGS: ClassVar[dict[str, str]] = {
         "N": "|F7",
         "S": "|JL",
@@ -75,7 +75,7 @@ class PipeMap:
             for n in self.find_fitting_neighbours(curr):
                 # need at least three tiles to form a loop
                 if len(loop) >= 3 and n == self.start:
-                    return loop
+                    return set(loop)
                 if n not in loop:
                     # assume there can be only one path
                     loop.append(n)
@@ -85,6 +85,8 @@ class PipeMap:
 def parse_pipe_map(s: str) -> PipeMap:
     grid: list[list[Tile]] = []
     for row, line in enumerate(s.split("\n")):
+        if not line:
+            continue
         grid.append([])
         for col, shape in enumerate(list(line)):
             grid[-1].append(Tile(shape, row, col))
@@ -99,7 +101,10 @@ def debug_print(pm: PipeMap):
         line = []
         for t in row:
             if t in pm.loop:
-                line.append("*")
+                if t == pm.start:
+                    line.append("@")
+                else:
+                    line.append("*")
             else:
                 line.append(t.shape)
         screen.append("".join(line))
@@ -112,37 +117,43 @@ def part1(pm: PipeMap) -> int:
 
 def part2(pm: PipeMap) -> int:
     debug_print(pm)
-    # find tiles inside the loop, the do flood fill
-    inside: set[Tile] = set()
-    for tile in pm.loop:
-        if tile.shape == "L":
-            t = pm.grid[tile.row - 1][tile.col + 1]
-            if t not in pm.loop:
-                inside.add(t)
-        if tile.shape == "J":
-            t = pm.grid[tile.row - 1][tile.col - 1]
-            if t not in pm.loop:
-                inside.add(t)
-        if tile.shape == "F":
-            t = pm.grid[tile.row + 1][tile.col + 1]
-            if t not in pm.loop:
-                inside.add(t)
-        if tile.shape == "7":
-            t = pm.grid[tile.row - 1][tile.col - 1]
-            if t not in pm.loop:
-                inside.add(t)
-    area: set[Tile] = set()
-    to_visit = deque(inside)
-    while to_visit:
-        curr = to_visit.popleft()
-        area.add(curr)
-        for n in pm.get_neighbours(curr).values():
-            if n in area:
-                continue
-            if n in pm.loop:
-                continue
-            to_visit.append(n)
-    return len(area)
+    bounds = []
+    for r in range(len(pm.grid)):
+        b = [t.col for t in pm.loop if t.row == r]
+        if b:
+            bounds.append((min(b), max(b)))
+        else:
+            bounds.append(None)
+    cnt = 0
+    enclosed: set[Tile] = set()
+    for r in range(len(pm.grid)):
+        b = bounds[r]
+        if b:
+            start, end = b
+            for c in range(start, end):
+                tile = pm.grid[r][c]
+                if tile in pm.loop:
+                    continue
+                if tile.shape == ".":
+                    continue
+                enclosed.add(tile)
+                cnt += 1
+    for r in range(len(pm.grid)):
+        b = bounds[r]
+        if b:
+            start, end = b
+            for c in range(start, end):
+                tile = pm.grid[r][c]
+                if tile in pm.loop:
+                    continue
+                if tile.shape == ".":  # ground
+                    hits = 0
+                    for i in range(c, end + 1):
+                        if pm.grid[r][i] in pm.loop or pm.grid[r][i] in enclosed:
+                            hits += 1
+                    if hits > 0 and hits % 2 != 0:
+                        cnt += 1
+    return cnt
 
 
 def main():
