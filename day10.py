@@ -116,44 +116,16 @@ def part1(pm: PipeMap) -> int:
 
 
 def part2(pm: PipeMap) -> int:
-    debug_print(pm)
-    bounds = []
-    for r in range(len(pm.grid)):
-        b = [t.col for t in pm.loop if t.row == r]
-        if b:
-            bounds.append((min(b), max(b)))
-        else:
-            bounds.append(None)
-    cnt = 0
-    enclosed: set[Tile] = set()
-    for r in range(len(pm.grid)):
-        b = bounds[r]
-        if b:
-            start, end = b
-            for c in range(start, end):
-                tile = pm.grid[r][c]
-                if tile in pm.loop:
-                    continue
-                if tile.shape == ".":
-                    continue
-                enclosed.add(tile)
-                cnt += 1
-    for r in range(len(pm.grid)):
-        b = bounds[r]
-        if b:
-            start, end = b
-            for c in range(start, end):
-                tile = pm.grid[r][c]
-                if tile in pm.loop:
-                    continue
-                if tile.shape == ".":  # ground
-                    hits = 0
-                    for i in range(c, end + 1):
-                        if pm.grid[r][i] in pm.loop or pm.grid[r][i] in enclosed:
-                            hits += 1
-                    if hits > 0 and hits % 2 != 0:
-                        cnt += 1
-    return cnt
+    count = 0
+    for row in pm.grid:
+        inside = False
+        for tile in row:
+            if tile in pm.loop:
+                if tile.shape in ("|", "F", "7"):
+                    inside = not inside
+            elif inside:
+                count += 1
+    return count
 
 
 def main():
