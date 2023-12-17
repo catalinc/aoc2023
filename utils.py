@@ -1,4 +1,5 @@
 import sys
+import regex as re
 
 
 def get_day_input(day: int) -> list[str]:
@@ -24,3 +25,7 @@ def get_day_input_full_content(day: int) -> str:
 def chunks(lst, size: int):
     for i in range(0, len(lst), size):
         yield lst[i:i + size]
+
+
+def parse_ints(s: str) -> list[int]:
+    return [int(m.group()) for m in re.finditer(r"\d+", s)]
