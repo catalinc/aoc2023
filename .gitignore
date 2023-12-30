@@ -129,7 +129,7 @@ env.bak/
 venv.bak/
 
 # Spyder project settings
-.spyderproject
+spyderproject
 .spyproject
 
 # Rope project settings
@@ -162,5 +162,6 @@ cython_debug/
 # AoC input files
 input/
 
-# IntelliJ
+# IDEs
 .idea/
+.vscode/
